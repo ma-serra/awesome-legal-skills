@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor Jurídico</title>
+<link rel="stylesheet" href="assets/main.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; font-family: system-ui, sans-serif; }
+
+.app { display: flex; flex-direction: column; height: 100vh; background: #f5f4f2; }
+
+.topbar {
+  background: #1c1c1e; color: white;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; height: 44px; flex-shrink: 0;
+}
+.topbar .brand { font-weight: 700; font-size: 13px; margin-right: 6px; }
+.topbar .vsep { width: 1px; height: 22px; background: #444; }
+.topbar .filename { font-size: 12px; color: #888; }
+.topbar .spacer { flex: 1; }
+.topbar button {
+  background: transparent; border: 1px solid #444; color: #ccc;
+  padding: 4px 11px; border-radius: 5px; font-size: 12px; cursor: pointer;
+}
+.topbar button:hover { background: #333; color: white; }
+.topbar .btn-primary { background: white; color: #111; border-color: white; font-weight: 600; }
+.topbar .btn-primary:hover { background: #e8e8e8; }
+.topbar .btn-ai { background: linear-gradient(135deg,#7c3aed,#4f46e5); border-color: transparent; color: white; font-weight: 600; }
+.topbar .btn-ai:hover { opacity:.9; }
+.topbar .btn-ai.active { background: linear-gradient(135deg,#5b21b6,#3730a3); }
+
+#sd-toolbar { background: #fff; border-bottom: 1px solid #e0ddd8; flex-shrink: 0; min-height: 40px; }
+
+.main { flex: 1; display: flex; overflow: hidden; }
+
+#editor-wrap { flex: 1; overflow: auto; background: #f5f4f2; display: flex; flex-direction: column; }
+#sd-editor { flex: 1; }
+
+#upload-screen { flex: 1; display: flex; align-items: center; justify-content: center; }
+.drop-zone {
+  background: white; border: 2px dashed #d0ccc7; border-radius: 12px;
+  padding: 56px 72px; text-align: center; cursor: pointer;
+  transition: all 0.2s; max-width: 440px; width: 100%;
+}
+.drop-zone:hover, .drop-zone.over { border-color: #1c1c1e; background: #fafaf9; }
+.drop-icon { font-size: 44px; margin-bottom: 14px; }
+.drop-title { font-size: 17px; font-weight: 600; color: #111; margin-bottom: 6px; }
+.drop-sub { font-size: 13px; color: #888; line-height: 1.6; }
+.drop-btn { display: inline-block; margin-top: 18px; padding: 9px 22px; background: #1c1c1e; color: white; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+#file-input { display: none; }
+
+#claude-panel {
+  width: 340px; flex-shrink: 0; background: white; border-left: 1px solid #e0ddd8;
+  display: none; flex-direction: column; overflow: hidden;
+}
+#claude-panel.open { display: flex; }
+
+.panel-header { padding: 12px 14px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 8px; }
+.panel-header h3 { font-size: 13px; font-weight: 700; color: #111; flex: 1; }
+.panel-header .badge { font-size: 10px; background: #7c3aed; color: white; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+.panel-close { background: none; border: none; cursor: pointer; color: #999; font-size: 16px; padding: 2px 6px; }
+
+.panel-section { padding: 10px 14px; border-bottom: 1px solid #f0eeeb; }
+.panel-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #999; margin-bottom: 8px; }
+.quick-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.qa-btn { background: #f5f4f2; border: 1px solid #e0ddd8; color: #333; padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all .15s; }
+.qa-btn:hover { background: #1c1c1e; color: white; border-color: #1c1c1e; }
+
+.design-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.de-btn { background: #f5f4f2; border: 1px solid #e0ddd8; color: #333; padding: 8px 6px; border-radius: 6px; font-size: 10.5px; cursor: pointer; text-align: center; transition: all .15s; line-height: 1.3; }
+.de-btn:hover { background: #7c3aed; color: white; border-color: #7c3aed; }
+.de-btn .de-icon { font-size: 16px; display: block; margin-bottom: 3px; }
+
+.chat-area { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.chat-msg { padding: 9px 11px; border-radius: 8px; font-size: 12.5px; line-height: 1.6; }
+.chat-msg.user { background: #1c1c1e; color: white; align-self: flex-end; max-width: 90%; }
+.chat-msg.ai { background: #f5f4f2; color: #111; border: 1px solid #e0ddd8; }
+.chat-thinking { color: #999; font-style: italic; font-size: 12px; }
+.insert-btn { margin-top: 8px; padding: 5px 10px; background: #7c3aed; color: white; border: none; border-radius: 5px; font-size: 11px; cursor: pointer; width: 100%; }
+.insert-btn:hover { background: #6d28d9; }
+
+.chat-input-area { padding: 10px 14px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 6px; }
+#chat-input { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 9px 11px; font-size: 13px; resize: none; font-family: inherit; outline: none; background: #fafaf9; }
+#chat-input:focus { border-color: #7c3aed; background: white; }
+.chat-send { background: #7c3aed; color: white; border: none; padding: 8px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; width: 100%; }
+.chat-send:hover { background: #6d28d9; }
+.chat-send:disabled { opacity: .5; cursor: not-allowed; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: white; border-radius: 12px; padding: 28px; width: 420px; max-width: 90vw; }
+.modal h3 { font-size: 16px; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.5; }
+.modal input { width: 100%; border: 1px solid #ddd; border-radius: 7px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; outline: none; }
+.modal input:focus { border-color: #7c3aed; }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-btns button { padding: 8px 18px; border-radius: 7px; font-size: 13px; cursor: pointer; border: none; }
+.modal-btns .btn-cancel { background: #f0f0f0; color: #333; }
+.modal-btns .btn-save { background: #7c3aed; color: white; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="brand">⚖ Editor Jurídico</span>
+    <div class="vsep"></div>
+    <span class="filename" id="filename">Nenhum documento</span>
+    <div class="spacer"></div>
+    <button onclick="abrirArquivo()">📂 Abrir .docx</button>
+    <button class="btn-primary" id="btn-salvar" onclick="salvar()" style="display:none">⬇ Salvar .docx</button>
+    <div class="vsep"></div>
+    <button class="btn-ai" id="btn-ai" onclick="togglePainel()">✦ Claude</button>
+    <button onclick="abrirConfig()" title="API Key" style="padding:4px 8px">⚙</button>
+  </div>
+
+  <div id="sd-toolbar"></div>
+
+  <div class="main">
+    <div id="editor-wrap">
+      <div id="upload-screen">
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-icon">📄</div>
+          <div class="drop-title">Abra um documento Word</div>
+          <div class="drop-sub">Arraste um <strong>.docx</strong> ou clique para selecionar<br>Tudo no seu browser — nada vai para servidor</div>
+          <div class="drop-btn" onclick="abrirArquivo()">Selecionar arquivo</div>
+        </div>
+      </div>
+      <div id="sd-editor" style="display:none;flex:1"></div>
+    </div>
+
+    <div id="claude-panel">
+      <div class="panel-header">
+        <h3>✦ Assistente Claude</h3>
+        <span class="badge">AI</span>
+        <button class="panel-close" onclick="togglePainel()">✕</button>
+      </div>
+      <div class="panel-section">
+        <div class="panel-section-title">Ações rápidas</div>
+        <div class="quick-actions">
+          <button class="qa-btn" onclick="acaoRapida('Melhore o texto selecionado tornando-o mais preciso juridicamente')">✏ Melhorar</button>
+          <button class="qa-btn" onclick="acaoRapida('Resuma o documento em 3 pontos principais')">📋 Resumir</button>
+          <button class="qa-btn" onclick="acaoRapida('Revise o argumento jurídico e aponte pontos fracos')">🔍 Revisar</button>
+          <button class="qa-btn" onclick="acaoRapida('Sugira fundamentos legais adicionais para fortalecer o pedido')">⚖ Fortalecer</button>
+        </div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-section-title">Legal design — inserir elemento</div>
+        <div class="design-grid">
+          <button class="de-btn" onclick="inserirElemento('callout')"><span class="de-icon">💡</span>Destaque</button>
+          <button class="de-btn" onclick="inserirElemento('timeline')"><span class="de-icon">📅</span>Timeline</button>
+          <button class="de-btn" onclick="inserirElemento('tabela-partes')"><span class="de-icon">👥</span>Partes</button>
+          <button class="de-btn" onclick="inserirElemento('tabela-pedidos')"><span class="de-icon">📋</span>Pedidos</button>
+          <button class="de-btn" onclick="inserirElemento('assinatura')"><span class="de-icon">✍</span>Assinatura</button>
+          <button class="de-btn" onclick="inserirElemento('alerta')"><span class="de-icon">⚠</span>Alerta</button>
+          <button class="de-btn" onclick="inserirElemento('lista-numerada')"><span class="de-icon">🔢</span>Lista multinível</button>
+          <button class="de-btn" onclick="inserirElemento('comparativo')"><span class="de-icon">⚖</span>Comparativo</button>
+        </div>
+      </div>
+      <div class="chat-area" id="chat-area">
+        <div class="chat-msg ai">Olá! Configure sua <strong>API Key da Anthropic</strong> no ⚙ e abra um documento <strong>.docx</strong> para começar.<br><br>Posso melhorar textos, gerar seções e inserir elementos de legal design diretamente no documento.</div>
+      </div>
+      <div class="chat-input-area">
+        <textarea id="chat-input" rows="3" placeholder="Ex: 'Gere uma seção sobre prescrição' ou 'Crie um callout com os pontos principais'"></textarea>
+        <button class="chat-send" id="chat-send" onclick="enviarMensagem()">Enviar ↵</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-config">
+  <div class="modal">
+    <h3>⚙ API Key da Anthropic</h3>
+    <p>Necessária para usar o assistente Claude. Fica salva apenas no seu browser (localStorage).</p>
+    <input type="password" id="api-key-input" placeholder="sk-ant-...">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="fecharConfig()">Cancelar</button>
+      <button class="btn-save" onclick="salvarConfig()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-inserir">
+  <div class="modal" style="max-width:600px;width:90vw">
+    <h3 id="modal-ins-titulo">Elemento gerado</h3>
+    <p style="margin-bottom:8px;font-size:12px;color:#666">Revise antes de inserir:</p>
+    <textarea id="modal-ins-conteudo" rows="10" style="width:100%;border:1px solid #ddd;border-radius:7px;padding:10px;font-size:12px;font-family:monospace;resize:vertical;outline:none"></textarea>
+    <div class="modal-btns" style="margin-top:12px">
+      <button class="btn-cancel" onclick="fecharInserir()">Cancelar</button>
+      <button class="btn-save" onclick="confirmarInserir()">✓ Inserir no documento</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept=".docx">
+<script type="module" src="app.js"></script>
+</body>
+</html>
