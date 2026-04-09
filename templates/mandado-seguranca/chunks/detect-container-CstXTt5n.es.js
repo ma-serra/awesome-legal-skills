@@ -1,0 +1,1 @@
+var e=[80,75,3,4],t=[208,207,17,224,161,177,26,225];function n(e,t){if(e.length<t.length)return!1;for(let n=0;n<t.length;n++)if(e[n]!==t[n])return!1;return!0}function r(r){let i=r instanceof Uint8Array?r:new Uint8Array(r);return n(i,e)?`zip`:n(i,t)?`cfb`:`unknown`}export{r as t};

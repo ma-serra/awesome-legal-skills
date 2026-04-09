@@ -1,0 +1,1 @@
+import{t as e}from"./detect-container-CstXTt5n.es.js";export{e as detectContainerType};
