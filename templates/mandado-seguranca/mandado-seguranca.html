@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --preto: #111111;
+    --cinza-escuro: #333333;
+    --cinza: #666666;
+    --cinza-claro: #f0efed;
+    --borda: #d0cdc9;
+  }
+
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 8.5pt;
+    color: var(--cinza-escuro);
+    background: white;
+    line-height: 1.55;
+  }
+
+  /* Página: coluna flex para empurrar rodapé para baixo */
+  .page {
+    width: 100%;
+    min-height: calc(297mm - 32mm); /* A4 menos margens */
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+  }
+  .page-body { flex: 1; }
+
+  /* ─── CABEÇALHO ─── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 9px;
+    border-bottom: 2px solid var(--preto);
+    margin-bottom: 13px;
+  }
+  .logo-area { display: flex; align-items: center; gap: 10px; }
+  .logo-box {
+    width: 42px; height: 42px;
+    background: var(--preto); color: white;
+    font-size: 14pt; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    letter-spacing: -1px;
+    font-family: Georgia, serif;
+  }
+  .logo-nome { font-size: 7.5pt; color: var(--cinza); line-height: 1.3; }
+  .logo-nome strong { font-size: 9pt; color: var(--preto); display: block; font-weight: 600; }
+  .header-direito { text-align: right; }
+  .header-juizo { font-size: 8pt; color: var(--cinza); line-height: 1.4; }
+  .header-juizo strong { color: var(--preto); font-weight: 600; font-size: 8.5pt; display: block; }
+  .tipo-acao {
+    display: inline-block;
+    border: 1.5px solid var(--preto);
+    padding: 2px 8px;
+    font-size: 7pt; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    margin-top: 4px; color: var(--preto);
+  }
+
+  /* ─── LAYOUT SIDEBAR + CONTEÚDO ─── */
+  .layout {
+    display: grid;
+    grid-template-columns: 54mm 1fr;
+    gap: 13px;
+    align-items: start;
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    border-right: 1px solid var(--borda);
+    padding-right: 11px;
+    font-size: 8pt;
+  }
+  .partes-label {
+    font-size: 6.5pt; font-weight: 700;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--cinza); margin-bottom: 3px;
+  }
+  .partes-nome { font-size: 8.5pt; font-weight: 600; color: var(--preto); line-height: 1.4; }
+  .partes-qualif { font-size: 7.5pt; color: var(--cinza); line-height: 1.45; margin-top: 2px; }
+  .partes-vs {
+    font-size: 7pt; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--cinza);
+    margin: 6px 0; padding-left: 2px;
+  }
+  hr.divider { border: none; border-top: 1px solid var(--borda); margin: 9px 0; }
+
+  .resumo-titulo {
+    font-size: 7pt; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--preto);
+    border-bottom: 1px solid var(--preto);
+    padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .resumo-item {
+    font-size: 7.5pt; color: var(--cinza-escuro);
+    line-height: 1.45; padding: 3px 0;
+    border-bottom: 1px dotted var(--borda);
+  }
+  .resumo-item:last-child { border-bottom: none; }
+
+  table.dados {
+    width: 100%; border-collapse: collapse;
+    margin-top: 8px; font-size: 7pt;
+  }
+  table.dados td {
+    padding: 4px 5px; border: 1px solid var(--borda); line-height: 1.3;
+  }
+  table.dados td:first-child {
+    font-weight: 600; color: var(--preto);
+    background: var(--cinza-claro); width: 44%;
+  }
+  table.dados td:last-child { color: var(--cinza); font-style: italic; }
+
+  /* ─── TIMELINE ─── */
+  .timeline {
+    display: flex; align-items: center;
+    margin-bottom: 11px; font-size: 6.5pt;
+  }
+  .tl-item { flex: 1; text-align: center; }
+  .tl-data { font-weight: 700; color: var(--preto); font-size: 7.5pt; display: block; }
+  .tl-desc { color: var(--cinza); font-size: 6pt; display: block; line-height: 1.3; margin-top: 1px; }
+  .tl-seta { font-size: 10pt; color: var(--borda); flex-shrink: 0; }
+
+  /* ─── CONTEÚDO ─── */
+  .secao { margin-bottom: 13px; }
+  .secao-titulo {
+    font-size: 10pt; font-weight: 700; color: var(--preto);
+    margin-bottom: 5px; padding-bottom: 3px;
+    border-bottom: 1.5px solid var(--preto);
+  }
+  .secao-sub {
+    font-size: 6.5pt; font-weight: 400;
+    color: var(--cinza); letter-spacing: 0.5px;
+    text-transform: uppercase; display: block; margin-top: 1px;
+  }
+  p { margin-bottom: 5px; text-align: justify; hyphens: auto; }
+  .bold { font-weight: 700; color: var(--preto); }
+
+  /* Callout boxes */
+  .callout-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin: 9px 0;
+  }
+  .callout-col {
+    background: var(--cinza-claro); padding: 8px 9px;
+    border-top: 2px solid var(--preto);
+  }
+  .callout-col-titulo {
+    font-size: 7pt; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--preto); margin-bottom: 5px;
+  }
+  .callout-col ul { padding-left: 10px; font-size: 7.5pt; }
+  .callout-col ul li { margin-bottom: 3px; }
+
+  .destaque-central {
+    text-align: center; padding: 9px 8px; margin: 9px 0;
+    border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda);
+  }
+  .destaque-central-texto {
+    font-size: 9.5pt; font-weight: 700; color: var(--preto);
+    line-height: 1.5; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .destaque-central-sub { font-size: 7pt; color: var(--cinza); margin-top: 2px; font-style: italic; }
+
+  /* Pedidos */
+  .pedidos { list-style: none; padding: 0; }
+  .pedidos li { display: flex; gap: 7px; margin-bottom: 5px; font-size: 8pt; line-height: 1.5; }
+  .pedido-letra { font-weight: 700; color: var(--preto); flex-shrink: 0; min-width: 13px; }
+
+  /* ─── RODAPÉ ─── */
+  .rodape {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1px solid var(--borda);
+    padding-top: 6px;
+    margin-top: 14px;
+    font-size: 7pt; color: var(--cinza);
+  }
+  .assinatura { text-align: center; }
+  .assinatura-linha { width: 90px; border-top: 1px solid var(--cinza-escuro); margin: 0 auto 3px; }
+  .assinatura-nome { font-weight: 600; color: var(--preto); font-size: 8pt; }
+  .assinatura-oab { font-size: 7pt; color: var(--cinza); }
+  .pagina-num { font-size: 7pt; color: var(--cinza); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ PÁGINA 1 ═══════════════ -->
+<div class="page">
+<div class="page-body">
+
+  <!-- CABEÇALHO -->
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-box">ST</div>
+      <div class="logo-nome">
+        <strong>SERRA &amp; TUAF</strong>
+        Advocacia e Assessoria Jurídica
+      </div>
+    </div>
+    <div class="header-direito">
+      <div class="header-juizo">
+        <strong>AO JUÍZO DA VARA CÍVEL DA COMARCA DE SÃO PAULO</strong>
+        Competente por distribuição
+      </div>
+      <div class="tipo-acao">Mandado de Segurança</div>
+    </div>
+  </div>
+
+  <!-- GRID PRINCIPAL -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <div style="margin-bottom:10px">
+        <div class="partes-label">Impetrante</div>
+        <div class="partes-nome">João Fontes</div>
+        <div class="partes-qualif">
+          menor impúbere, representado por sua genitora, Ana das Flores,
+          brasileira, solteira, operária de fábrica de sapatos.
+          RG: 21.098.323, CPF: 111.222.333-54, residente à Rua 56,
+          estada..., por intermédio de seus advogados subscritores.
+        </div>
+      </div>
+
+      <div class="partes-vs">— contra —</div>
+
+      <div style="margin-bottom:10px">
+        <div class="partes-label">Impetrado</div>
+        <div class="partes-nome">Município de São Paulo</div>
+        <div class="partes-qualif">
+          pessoa jurídica de direito público, com sede na Rua da Política,
+          171, Bairro Inocência, São Paulo-SE, &amp; o
+          <strong style="color:var(--cinza-escuro)">Secretário Municipal de
+          Educação, Senhor José da Silva</strong>, no mesmo endereço.
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="resumo-titulo">Resumo da Demanda</div>
+      <div class="resumo-item">
+        A autora <strong>demanda uma vaga escolar</strong> que atenda à
+        educação infantil, pois sua genitora não dispõe de condições
+        financeiras e não há quem cuide de sua filha. Todos os órgãos
+        municipais informaram que <strong>não há mais vagas disponíveis</strong>,
+        e o requerimento administrativo foi indeferido.
+      </div>
+      <div class="resumo-item" style="margin-top:4px">
+        Segurança requerida com fundamento no direito constitucional à
+        educação, dever atribuído ao Estado.
+      </div>
+
+      <table class="dados">
+        <tr><td>Autoridade Coatora</td><td>Digite...</td></tr>
+        <tr><td>Ato Impugnado</td><td>Digite...</td></tr>
+        <tr><td>Prazo Decadencial</td><td>Digite...</td></tr>
+        <tr><td>Objetivo da Liminar</td><td>Digite...</td></tr>
+      </table>
+
+      <hr class="divider">
+
+      <div class="resumo-titulo">Autoridade Coatora &amp; Decadência</div>
+      <div style="font-size:7pt; color:var(--cinza-escuro); margin-top:4px; line-height:1.5">
+        <strong style="color:var(--preto)">Ato ilícito praticado pelo Secretário Municipal
+        a menos de 120 dias.</strong> O ato foi impugnado dentro do prazo
+        decadencial previsto no art. 23 da Lei 12.016/2009.
+      </div>
+
+    </div><!-- /sidebar -->
+
+    <!-- CONTEÚDO -->
+    <div>
+
+      <!-- Timeline -->
+      <div class="timeline">
+        <div class="tl-item">
+          <span class="tl-data">10.07.2017</span>
+          <span class="tl-desc">Ato praticado</span>
+        </div>
+        <div class="tl-seta">›</div>
+        <div class="tl-item">
+          <span class="tl-data">15.07.2017</span>
+          <span class="tl-desc">Ciência, 05 dias</span>
+        </div>
+        <div class="tl-seta">›</div>
+        <div class="tl-item">
+          <span class="tl-data">26.07.2017</span>
+          <span class="tl-desc">Protocolo do MS</span>
+        </div>
+        <div class="tl-seta">›</div>
+        <div class="tl-item">
+          <span class="tl-data">12.11.2017</span>
+          <span class="tl-desc">Decadência</span>
+        </div>
+      </div>
+
+      <div class="secao">
+        <div class="secao-titulo">
+          Cabimento
+          <span class="secao-sub">único remédio disponível para tutelar o direito líquido e certo em tela</span>
+        </div>
+        <p>O direito líquido e certo da paciente não é amparado por habeas corpus, pois não se trata
+        da liberdade de locomoção, nem por habeas data, visto que não versa sobre direito à informação.
+        Dessa modo, se impetrou o presente <span class="bold">Mandado de Segurança na forma do artigo 5º,
+        LXIX da CF/88</span> e artigo 1º da Lei 12.016/2009.</p>
+      </div>
+
+      <div class="secao">
+        <div class="secao-titulo">
+          Objeto da demanda
+          <span class="secao-sub">uma mãe, uma filha, um objetivo: educação</span>
+        </div>
+        <p>A Impetrante, menor impúbere com quatro anos de idade, é filha de Suzi, operária de
+        uma fábrica de calçados, que trabalha das 7h00 às 19h00. Percebe R$ 1.000,00 mensais
+        e, portanto, <span class="bold">não dispõe de condições financeiras e nem de ninguém
+        que possa auxiliá-la nos cuidados com sua filha</span>, necessitando de vaga escolar na
+        educação infantil.</p>
+
+        <p>Sua genitora procurou todos os órgãos públicos municipais em busca de uma vaga, sem
+        sucesso. O município informou inexistência de vagas nas creches existentes, sem previsão
+        de novas vagas. A genitora protocolou requerimento junto ao Secretário Municipal de
+        Educação, que obteve negativa por escrito em 10 de julho de 2017.</p>
+
+        <p>Dessa forma, por não restar alternativa senão a impetração do presente writ, na busca de
+        garantir o direito líquido e certo de acesso à educação pública.</p>
+      </div>
+
+      <div class="secao">
+        <div class="secao-titulo">
+          O Direito
+          <span class="secao-sub">o direito à educação e o dever do estado</span>
+        </div>
+        <p>Na forma do artigo 6º da Constituição, a <span class="bold">Educação é um direito
+        Social</span>, expressamente previsto como dever do Estado e da família (art. 205 CF/88).
+        O ensino da Educação Básica é obrigatório e gratuito dos quatro aos dezessete anos de
+        idade (art. 208, I da CF/88).</p>
+
+        <div class="destaque-central">
+          <div class="destaque-central-texto">Criança de 4 anos sem acesso à educação,<br>em afronta à Constituição</div>
+          <div class="destaque-central-sub">Uma mãe, uma filha, um objetivo: educação</div>
+        </div>
+
+        <p>O Município de São Paulo, ao não proporcionar vaga, fere a dignidade da pessoa humana
+        (art. 1º, III da CF/88) e nega um direito que é líquido, límpido e certo, determinado
+        pelo ordenamento maior.</p>
+      </div>
+
+    </div><!-- /conteudo -->
+  </div><!-- /layout -->
+
+</div><!-- /page-body -->
+
+<!-- RODAPÉ PG 1 -->
+<div class="rodape">
+  <div>São Paulo, 17 de julho de 2022.</div>
+  <div class="assinatura">
+    <div class="assinatura-linha"></div>
+    <div class="assinatura-nome">Júlio G. Xavier</div>
+    <div class="assinatura-oab">OAB/RJ 17.248</div>
+  </div>
+  <div class="pagina-num">1</div>
+</div>
+
+</div><!-- /page 1 -->
+
+
+<!-- ═══════════════ PÁGINA 2 ═══════════════ -->
+<div class="page">
+<div class="page-body">
+
+  <!-- CABEÇALHO PG 2 -->
+  <div class="header" style="padding-bottom:7px;margin-bottom:11px">
+    <div class="logo-area">
+      <div class="logo-box" style="width:30px;height:30px;font-size:11pt">ST</div>
+      <div class="logo-nome" style="font-size:7pt">
+        <strong style="font-size:8pt">SERRA &amp; TUAF</strong>
+        Mandado de Segurança — João Fontes vs. Município de São Paulo
+      </div>
+    </div>
+    <div style="font-size:7pt;color:var(--cinza)">Pág. 2 / 2</div>
+  </div>
+
+  <!-- 2 COLUNAS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    <!-- Coluna A -->
+    <div>
+      <div class="secao">
+        <div class="secao-titulo">
+          A medida liminar
+          <span class="secao-sub">e o risco de uma criança perder dias letivos</span>
+        </div>
+        <p>O artigo 7º, III da Lei 12.016/2009 dispõe que "quando houver fundamento relevante e
+        do ato impugnado puder resultar ineficácia da medida" poderá o juiz determinar a suspensão
+        do ato, deferindo a medida liminar com prioridade de tramitação.</p>
+      </div>
+
+      <div class="callout-grid" style="grid-template-columns:1fr 1fr">
+        <div class="callout-col">
+          <div class="callout-col-titulo">Fundamento relevante</div>
+          <ul>
+            <li>Comprovação da <strong>idade da autora</strong></li>
+            <li>Direito à <strong>educação, dever do estado</strong></li>
+            <li><strong>Obrigatoriedade</strong> do ensino básico</li>
+          </ul>
+        </div>
+        <div class="callout-col">
+          <div class="callout-col-titulo">Risco de ineficácia</div>
+          <ul>
+            <li>Autora <strong>fora da escola</strong>, perdendo dias letivos</li>
+            <li>Genitora <strong>sem condições</strong> de cuidar da filha</li>
+          </ul>
+        </div>
+      </div>
+
+      <p style="margin-top:8px">Comprovado o <em>fumus boni iuris</em> e o <em>periculum in mora</em>,
+      requer a concessão de medida liminar para que o Secretário Municipal de Educação providencie
+      vaga para a Impetrante na educação infantil, conforme determina a Constituição.</p>
+    </div>
+
+    <!-- Coluna B -->
+    <div>
+      <div class="secao">
+        <div class="secao-titulo">
+          Requerimentos &amp; Disposições Finais
+          <span class="secao-sub">diante do exposto, requer</span>
+        </div>
+
+        <div style="font-size:7pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--cinza);margin-bottom:4px">Quanto à praxis</div>
+        <ul class="pedidos">
+          <li><span class="pedido-letra">A.</span><span>Notificação da autoridade coatora para, no prazo de 10 dias, prestar informações (art. 7º, I da Lei 12.016/2009);</span></li>
+          <li><span class="pedido-letra">B.</span><span>Ciência à Prefeitura Municipal nos termos do art. 7º, II da Lei 12.016/2009;</span></li>
+          <li><span class="pedido-letra">C.</span><span>Intimação do Ministério Público (art. 12 da Lei 12.016/2009);</span></li>
+          <li><span class="pedido-letra">D.</span><span>Fixação de multa (art. 77, § 2º do CPC).</span></li>
+        </ul>
+
+        <div style="font-size:7pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--cinza);margin:8px 0 4px">Quanto aos pedidos</div>
+        <ul class="pedidos">
+          <li><span class="pedido-letra">E.</span><span>A <strong>concessão de medida liminar</strong> para que o Município de São Paulo providencie urgentemente vaga para a Impetrante na educação infantil;</span></li>
+          <li><span class="pedido-letra">F.</span><span>A <strong>concessão da medida definitiva</strong>, ratificando a liminar e assegurando o direito líquido e certo da Impetrante de ingressar na Educação Infantil.</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- /2 cols -->
+
+</div><!-- /page-body -->
+
+<!-- RODAPÉ PG 2 -->
+<div class="rodape">
+  <div>São Paulo, 17 de julho de 2022.</div>
+  <div class="assinatura">
+    <div class="assinatura-linha"></div>
+    <div class="assinatura-nome">Júlio G. Xavier</div>
+    <div class="assinatura-oab">OAB/RJ 17.248</div>
+  </div>
+  <div class="pagina-num">2</div>
+</div>
+
+</div><!-- /page 2 -->
+
+</body>
+</html>
