@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor Jurídico — SuperDoc</title>
+<link rel="stylesheet" href="node_modules/superdoc/dist/style.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f0f0f0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* TOOLBAR */
+  #toolbar {
+    background: #1a1a1a;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    height: 48px;
+    flex-shrink: 0;
+    z-index: 100;
+  }
+  #toolbar .brand {
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #toolbar .sep { width: 1px; height: 28px; background: #444; }
+  #toolbar button {
+    background: transparent;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  #toolbar button:hover { background: #333; color: white; border-color: #666; }
+  #toolbar .btn-primary {
+    background: white;
+    color: #1a1a1a;
+    border-color: white;
+    font-weight: 600;
+  }
+  #toolbar .btn-primary:hover { background: #eee; }
+  #toolbar .spacer { flex: 1; }
+  #toolbar .file-info { font-size: 12px; color: #888; }
+
+  /* UPLOAD SCREEN */
+  #upload-screen {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .upload-box {
+    background: white;
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    padding: 60px 80px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    max-width: 480px;
+  }
+  .upload-box:hover { border-color: #1a1a1a; }
+  .upload-box.drag-over { border-color: #1a1a1a; background: #f8f8f8; }
+  .upload-icon { font-size: 48px; margin-bottom: 16px; }
+  .upload-title { font-size: 18px; font-weight: 600; color: #111; margin-bottom: 8px; }
+  .upload-sub { font-size: 13px; color: #888; line-height: 1.6; }
+  .upload-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 24px;
+    background: #1a1a1a;
+    color: white;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #file-input { display: none; }
+
+  /* EDITOR */
+  #editor-screen {
+    flex: 1;
+    display: none;
+    overflow: hidden;
+    flex-direction: column;
+  }
+  #superdoc-container {
+    flex: 1;
+    overflow: auto;
+  }
+  #superdoc-container .superdoc {
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <div class="brand">
+    ⚖ Editor Jurídico
+  </div>
+  <div class="sep"></div>
+  <span class="file-info" id="file-name">Nenhum documento aberto</span>
+  <div class="spacer"></div>
+  <button onclick="novoDoc()">+ Novo</button>
+  <button onclick="abrirDoc()">📂 Abrir .docx</button>
+  <button class="btn-primary" id="btn-salvar" onclick="salvarDoc()" style="display:none">⬇ Salvar .docx</button>
+</div>
+
+<!-- TELA DE UPLOAD -->
+<div id="upload-screen">
+  <div class="upload-box" id="drop-zone">
+    <div class="upload-icon">📄</div>
+    <div class="upload-title">Abra ou arraste um documento Word</div>
+    <div class="upload-sub">
+      Suporta arquivos <strong>.docx</strong><br>
+      Edite direto no browser — nada sai do seu computador
+    </div>
+    <div class="upload-btn" onclick="abrirDoc()">Selecionar arquivo</div>
+  </div>
+</div>
+
+<!-- EDITOR SUPERDOC -->
+<div id="editor-screen">
+  <div id="superdoc-container"></div>
+</div>
+
+<input type="file" id="file-input" accept=".docx">
+
+<script src="node_modules/superdoc/dist/superdoc.umd.js"></script>
+<script>
+let superdocInstance = null;
+let currentFileName = 'documento.docx';
+
+// Drag & drop
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.docx')) carregarArquivo(file);
+});
+
+function abrirDoc() {
+  document.getElementById('file-input').click();
+}
+
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) carregarArquivo(file);
+  e.target.value = '';
+});
+
+function carregarArquivo(file) {
+  currentFileName = file.name;
+  document.getElementById('file-name').textContent = file.name;
+
+  // Mostrar editor
+  document.getElementById('upload-screen').style.display = 'none';
+  const editorScreen = document.getElementById('editor-screen');
+  editorScreen.style.display = 'flex';
+  document.getElementById('btn-salvar').style.display = 'inline-block';
+
+  // Inicializar SuperDoc
+  const container = document.getElementById('superdoc-container');
+  container.innerHTML = '';
+
+  const editorDiv = document.createElement('div');
+  editorDiv.id = 'superdoc';
+  container.appendChild(editorDiv);
+
+  superdocInstance = new SuperDoc({
+    selector: '#superdoc',
+    documents: [{
+      id: 'doc-1',
+      type: 'docx',
+      data: file,
+    }],
+  });
+}
+
+async function novoDoc() {
+  // Criar DOCX mínimo válido e abrir
+  const response = await fetch('mandado-seguranca.docx').catch(() => null);
+  if (response && response.ok) {
+    const blob = await response.blob();
+    const file = new File([blob], 'novo-documento.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    carregarArquivo(file);
+  } else {
+    alert('Para criar um novo documento, abra um arquivo .docx existente como base.');
+    abrirDoc();
+  }
+}
+
+async function salvarDoc() {
+  if (!superdocInstance) return;
+  try {
+    const blob = await superdocInstance.getDocxBlob('doc-1');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = currentFileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao salvar: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
