@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor Jurídico</title>
+<style>
+
+/* ── RESET ── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ── TOOLBAR ── */
+#toolbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: #1a1a1a; color: white;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; height: 48px;
+  font-family: system-ui, sans-serif; font-size: 13px;
+}
+#toolbar .logo { font-weight: 700; letter-spacing: 0.5px; margin-right: 8px; opacity: 0.9; }
+#toolbar .sep { width: 1px; height: 24px; background: #444; margin: 0 4px; }
+#toolbar button {
+  background: transparent; border: none; color: #ccc;
+  padding: 5px 10px; border-radius: 4px; cursor: pointer;
+  font-size: 13px; transition: all 0.15s;
+}
+#toolbar button:hover { background: #333; color: white; }
+#toolbar button.active { background: #333; color: white; }
+#toolbar .tip {
+  margin-left: auto; font-size: 11px; color: #666;
+}
+#toolbar .btn-pdf {
+  background: white; color: #1a1a1a; font-weight: 600;
+  padding: 6px 14px; border-radius: 4px;
+  margin-left: 8px;
+}
+#toolbar .btn-pdf:hover { background: #eee; }
+
+/* ── PAGE WRAPPER ── */
+body { background: #e8e8e8; padding-top: 48px; }
+
+.sheet-wrapper {
+  display: flex; justify-content: center;
+  padding: 32px 16px 64px;
+}
+
+/* ── FOLHA A4 ── */
+.sheet {
+  background: white;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 24mm 22mm 24mm 22mm;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.18);
+  position: relative;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 10pt;
+  color: #222;
+  line-height: 1.6;
+}
+
+/* ── ELEMENTOS EDITÁVEIS ── */
+[contenteditable] {
+  outline: none;
+  border-radius: 2px;
+  transition: background 0.15s;
+  cursor: text;
+}
+[contenteditable]:hover { background: rgba(66,133,244,0.05); }
+[contenteditable]:focus {
+  background: rgba(66,133,244,0.08);
+  box-shadow: 0 0 0 2px rgba(66,133,244,0.3);
+}
+
+/* ── CABEÇALHO ── */
+.cabecalho {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding-bottom: 12px; margin-bottom: 24px;
+  border-bottom: 2px solid #111;
+}
+.logo-bloco { display: flex; align-items: center; gap: 12px; }
+.logo-caixa {
+  width: 46px; height: 46px; background: #111; color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16pt; font-weight: 700; font-family: Georgia, serif;
+  flex-shrink: 0;
+}
+.logo-texto { line-height: 1.4; }
+.logo-texto .escritorio {
+  font-size: 10.5pt; font-weight: 700; color: #111; display: block;
+}
+.logo-texto .subtitulo { font-size: 8pt; color: #888; display: block; }
+
+.cabecalho-direito { text-align: right; }
+.cabecalho-direito .destinatario {
+  font-size: 8.5pt; color: #555; line-height: 1.5;
+}
+.cabecalho-direito .destinatario strong {
+  color: #111; font-size: 9pt; display: block; margin-bottom: 2px;
+}
+.tipo-peca {
+  display: inline-block; border: 1.5px solid #111;
+  padding: 2px 10px; font-size: 7pt; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* ── QUALIFICAÇÃO ── */
+.qualificacao {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 24px; margin-bottom: 28px;
+}
+.parte-bloco {}
+.parte-label {
+  font-size: 7pt; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #999;
+  margin-bottom: 4px;
+}
+.parte-nome {
+  font-size: 11pt; font-weight: 700; color: #111;
+  margin-bottom: 4px;
+}
+.parte-qual { font-size: 8.5pt; color: #555; line-height: 1.6; }
+
+/* ── LINHA DIVISÓRIA ── */
+.divisor {
+  border: none; border-top: 1px solid #ddd;
+  margin: 0 0 28px 0;
+}
+
+/* ── SEÇÃO ── */
+.secao { margin-bottom: 26px; }
+.secao-titulo {
+  font-size: 11.5pt; font-weight: 700; color: #111;
+  padding-bottom: 6px; margin-bottom: 10px;
+  border-bottom: 1.5px solid #111;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.secao-titulo .sub {
+  font-size: 7pt; font-weight: 400; color: #999;
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.secao p { margin-bottom: 8px; text-align: justify; hyphens: auto; }
+.secao p:last-child { margin-bottom: 0; }
+
+/* ── RODAPÉ ── */
+.rodape {
+  margin-top: 40px; padding-top: 12px;
+  border-top: 1px solid #ddd;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  font-size: 8.5pt; color: #555;
+}
+.assinatura { text-align: center; }
+.assinatura-linha {
+  width: 120px; border-top: 1px solid #444;
+  margin: 0 auto 5px;
+}
+.assinatura-nome { font-weight: 700; color: #111; font-size: 9pt; }
+.assinatura-oab { font-size: 7.5pt; color: #888; }
+
+/* ── PRINT ── */
+@media print {
+  #toolbar { display: none !important; }
+  body { background: white; padding-top: 0; }
+  .sheet-wrapper { padding: 0; }
+  .sheet {
+    box-shadow: none; width: 100%;
+    padding: 20mm 22mm 20mm 22mm;
+  }
+  [contenteditable]:hover,
+  [contenteditable]:focus {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  @page { size: A4; margin: 0; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <span class="logo">⚖ Editor Jurídico</span>
+  <div class="sep"></div>
+  <button onclick="fmt('bold')" title="Negrito"><b>N</b></button>
+  <button onclick="fmt('italic')" title="Itálico"><i>I</i></button>
+  <button onclick="fmt('underline')" title="Sublinhado"><u>S</u></button>
+  <div class="sep"></div>
+  <button onclick="fmt('justifyLeft')" title="Esquerda">⬅</button>
+  <button onclick="fmt('justifyCenter')" title="Centro">↔</button>
+  <button onclick="fmt('justifyFull')" title="Justificado">☰</button>
+  <div class="sep"></div>
+  <button onclick="adicionarSecao()" title="Nova seção">+ Seção</button>
+  <span class="tip">Clique em qualquer texto para editar</span>
+  <button class="btn-pdf" onclick="window.print()">⬇ Salvar PDF</button>
+</div>
+
+<!-- FOLHA -->
+<div class="sheet-wrapper">
+<div class="sheet" id="documento">
+
+  <!-- CABEÇALHO -->
+  <div class="cabecalho">
+    <div class="logo-bloco">
+      <div class="logo-caixa" contenteditable="true" spellcheck="false">ST</div>
+      <div class="logo-texto">
+        <span class="escritorio" contenteditable="true" spellcheck="false">SERRA &amp; TUAF</span>
+        <span class="subtitulo" contenteditable="true" spellcheck="false">Advocacia e Assessoria Jurídica</span>
+      </div>
+    </div>
+    <div class="cabecalho-direito">
+      <div class="destinatario">
+        <strong contenteditable="true" spellcheck="false">AO JUÍZO DA VARA CÍVEL DA COMARCA DE SÃO PAULO</strong>
+        <span contenteditable="true" spellcheck="false">Competente por distribuição</span>
+      </div>
+      <div class="tipo-peca" contenteditable="true" spellcheck="false">Mandado de Segurança</div>
+    </div>
+  </div>
+
+  <!-- QUALIFICAÇÃO DAS PARTES -->
+  <div class="qualificacao">
+    <div class="parte-bloco">
+      <div class="parte-label">Impetrante</div>
+      <div class="parte-nome" contenteditable="true" spellcheck="false">João Fontes</div>
+      <div class="parte-qual" contenteditable="true" spellcheck="false">menor impúbere, neste ato representado por sua genitora, Ana das Flores, brasileira, solteira, operária de fábrica de sapatos. RG: 21.098.323, CPF: 111.222.333-54, residente à Rua 56, por intermédio de seus advogados subscritores.</div>
+    </div>
+    <div class="parte-bloco">
+      <div class="parte-label">Impetrado</div>
+      <div class="parte-nome" contenteditable="true" spellcheck="false">Município de São Paulo</div>
+      <div class="parte-qual" contenteditable="true" spellcheck="false">pessoa jurídica de direito público, com sede na Rua da Política, 171, Bairro Inocência, São Paulo-SE, representado pelo Secretário Municipal de Educação, Senhor José da Silva, no mesmo endereço.</div>
+    </div>
+  </div>
+
+  <hr class="divisor">
+
+  <!-- SEÇÕES EDITÁVEIS -->
+  <div id="secoes">
+
+    <div class="secao">
+      <div class="secao-titulo">
+        <span contenteditable="true" spellcheck="false">Dos Fatos</span>
+        <span class="sub" contenteditable="true" spellcheck="false">breve exposição da situação</span>
+      </div>
+      <div contenteditable="true" spellcheck="false">
+        <p>A Impetrante, menor impúbere com quatro anos de idade, é filha de Suzi, operária de uma fábrica de calçados, que trabalha das 7h00 às 19h00 e percebe R$ 1.000,00 mensais, não dispondo de condições financeiras para arcar com creche particular, nem de familiares que possam auxiliar nos cuidados da criança.</p>
+        <p>A genitora procurou todos os órgãos públicos municipais em busca de uma vaga, sem sucesso. O Município informou inexistência de vagas, sem previsão de novas. Foi protocolado requerimento administrativo junto ao Secretário Municipal de Educação, que restou indeferido em 10 de julho de 2017.</p>
+      </div>
+    </div>
+
+    <div class="secao">
+      <div class="secao-titulo">
+        <span contenteditable="true" spellcheck="false">Do Direito</span>
+        <span class="sub" contenteditable="true" spellcheck="false">fundamentos jurídicos do pedido</span>
+      </div>
+      <div contenteditable="true" spellcheck="false">
+        <p>Na forma do artigo 6º da Constituição Federal, a <strong>Educação é um direito social</strong>, expressamente previsto como dever do Estado e da família (art. 205 CF/88). O ensino da Educação Básica é obrigatório e gratuito dos quatro aos dezessete anos de idade (art. 208, I da CF/88).</p>
+        <p>O Município de São Paulo, ao negar a vaga, viola frontalmente o preceito constitucional e fere a dignidade da pessoa humana (art. 1º, III da CF/88), negando à criança um direito líquido, límpido e certo.</p>
+      </div>
+    </div>
+
+    <div class="secao">
+      <div class="secao-titulo">
+        <span contenteditable="true" spellcheck="false">Do Cabimento</span>
+        <span class="sub" contenteditable="true" spellcheck="false">adequação do remédio constitucional</span>
+      </div>
+      <div contenteditable="true" spellcheck="false">
+        <p>O direito líquido e certo da Impetrante não é amparado por habeas corpus, por não se tratar de liberdade de locomoção, nem por habeas data, por não versar sobre direito à informação. Impõe-se, assim, o <strong>Mandado de Segurança nos termos do art. 5º, LXIX da CF/88</strong> e art. 1º da Lei 12.016/2009.</p>
+        <p>O ato ilícito foi praticado pelo Secretário Municipal de Educação, autoridade coatora, a menos de 120 dias, respeitado o prazo decadencial do art. 23 da Lei 12.016/2009.</p>
+      </div>
+    </div>
+
+    <div class="secao">
+      <div class="secao-titulo">
+        <span contenteditable="true" spellcheck="false">Da Liminar</span>
+        <span class="sub" contenteditable="true" spellcheck="false">fumus boni iuris e periculum in mora</span>
+      </div>
+      <div contenteditable="true" spellcheck="false">
+        <p>O <em>fumus boni iuris</em> está comprovado pelo direito constitucional à educação e pela obrigatoriedade do ensino para crianças de quatro anos. O <em>periculum in mora</em> reside no risco concreto de a criança perder dias letivos irreversíveis, prejudicando seu desenvolvimento.</p>
+        <p>Presentes os requisitos do art. 7º, III da Lei 12.016/2009, requer-se a concessão de medida liminar determinando ao Secretário Municipal de Educação que providencie imediatamente vaga para a Impetrante na rede pública de educação infantil.</p>
+      </div>
+    </div>
+
+    <div class="secao">
+      <div class="secao-titulo">
+        <span contenteditable="true" spellcheck="false">Dos Pedidos</span>
+        <span class="sub" contenteditable="true" spellcheck="false">diante do exposto, requer</span>
+      </div>
+      <div contenteditable="true" spellcheck="false">
+        <p>Diante do exposto, requer-se a Vossa Excelência:</p>
+        <p><strong>a)</strong> A notificação da autoridade coatora para prestar informações no prazo de 10 dias (art. 7º, I da Lei 12.016/2009);</p>
+        <p><strong>b)</strong> A ciência à Prefeitura Municipal (art. 7º, II da Lei 12.016/2009);</p>
+        <p><strong>c)</strong> A intimação do Ministério Público (art. 12 da Lei 12.016/2009);</p>
+        <p><strong>d)</strong> A <strong>concessão de medida liminar</strong> determinando a disponibilização imediata de vaga na educação infantil;</p>
+        <p><strong>e)</strong> A <strong>concessão da segurança em definitivo</strong>, ratificando a liminar e assegurando o direito constitucional da Impetrante.</p>
+        <p>Dá-se à causa o valor de R$ 1.000,00 (um mil reais). Pede deferimento.</p>
+      </div>
+    </div>
+
+  </div><!-- /secoes -->
+
+  <!-- RODAPÉ -->
+  <div class="rodape">
+    <div contenteditable="true" spellcheck="false">São Paulo, 17 de julho de 2022.</div>
+    <div class="assinatura">
+      <div class="assinatura-linha"></div>
+      <div class="assinatura-nome" contenteditable="true" spellcheck="false">Júlio G. Xavier</div>
+      <div class="assinatura-oab" contenteditable="true" spellcheck="false">OAB/RJ 17.248</div>
+    </div>
+  </div>
+
+</div><!-- /sheet -->
+</div><!-- /wrapper -->
+
+<script>
+function fmt(cmd) {
+  document.execCommand(cmd, false, null);
+}
+
+function adicionarSecao() {
+  const secoes = document.getElementById('secoes');
+  const nova = document.createElement('div');
+  nova.className = 'secao';
+  nova.innerHTML = `
+    <div class="secao-titulo">
+      <span contenteditable="true" spellcheck="false">Nova Seção</span>
+      <span class="sub" contenteditable="true" spellcheck="false">subtítulo opcional</span>
+    </div>
+    <div contenteditable="true" spellcheck="false">
+      <p>Digite o conteúdo desta seção aqui.</p>
+    </div>
+  `;
+  secoes.appendChild(nova);
+  nova.querySelector('[contenteditable]').focus();
+}
+
+// Auto-salvar no localStorage
+const doc = document.getElementById('documento');
+const CHAVE = 'editor-juridico-v1';
+
+// Carregar conteúdo salvo
+const salvo = localStorage.getItem(CHAVE);
+if (salvo) {
+  const confirmar = confirm('Há um documento salvo. Deseja restaurá-lo?');
+  if (confirmar) doc.innerHTML = salvo;
+}
+
+// Salvar automaticamente a cada 30s
+setInterval(() => {
+  localStorage.setItem(CHAVE, doc.innerHTML);
+}, 30000);
+
+// Salvar ao sair
+window.addEventListener('beforeunload', () => {
+  localStorage.setItem(CHAVE, doc.innerHTML);
+});
+</script>
+</body>
+</html>
